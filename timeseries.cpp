@@ -1,8 +1,3 @@
-//
-// Created by yuvalalroy on 11/1/21.
-//
-
-
 #include <sstream>
 #include <fstream>
 #include "timeseries.h"
