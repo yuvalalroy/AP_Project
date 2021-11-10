@@ -6,10 +6,15 @@
 #define AP_PROJECT_SIMPLEANOMALYDETECTOR_H
 
 #include "anomaly_detection_util.h"
+#include "AnomalyDetector.h"
+#include <vector>
+#include <algorithm>
+#include <string.h>
+#include <math.h>
 
 struct correlatedFeatures{
     string feature1,feature2; // names of the correlated features
-    float correlation;
+    float corrlation;
     Line lin_reg;
     float threshold;
 };
@@ -19,8 +24,8 @@ class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 public:
     SimpleAnomalyDetector();
     virtual ~SimpleAnomalyDetector();
-    void learnNormal(const timeseries& ts) override;
-    virtual vector<AnomalyReport> detect(const timeseries& ts);
+    virtual void learnNormal(const TimeSeries& ts);
+    virtual vector<AnomalyReport> detect(const TimeSeries& ts);
     vector<correlatedFeatures> getNormalModel();
     static Point **fromVecToPoints(vector<float> vec1, vector<float> vec2);
     void setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,

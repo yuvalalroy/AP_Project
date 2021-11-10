@@ -8,12 +8,12 @@
 #include "timeseries.h"
 
 
-std::vector<float> timeseries::getVecByFeature(const std::string& feature) const {
+std::vector<float> TimeSeries::getVecByFeature(const std::string& feature) const {
     return _dataMap.at(feature);
 }
 
 
-void timeseries::setMapKeys(const std::string &keys) {
+void TimeSeries::setMapKeys(const std::string &keys) {
     std::string feature;
     std::stringstream stream(keys);
 
@@ -23,7 +23,7 @@ void timeseries::setMapKeys(const std::string &keys) {
 }
 
 
-void timeseries::setMapValues(const std::string &values) {
+void TimeSeries::setMapValues(const std::string &values) {
     std::map<std::string, std::vector<float>>::iterator iter;
     iter = _dataMap.begin();
     std::string val;
@@ -35,7 +35,7 @@ void timeseries::setMapValues(const std::string &values) {
 }
 
 
-void timeseries::chargeCSVToMap(const char *CSVFile) {
+void TimeSeries::chargeCSVToMap(const char *CSVFile) {
     std::ifstream file;
     file.open(CSVFile);
     std::string line;
@@ -51,7 +51,7 @@ void timeseries::chargeCSVToMap(const char *CSVFile) {
 }
 
 
-std::vector<std::string> timeseries::getFeatures() const {
+std::vector<std::string> TimeSeries::getFeatures() const {
     std::vector<std::string> features;
     for (const auto & iter : _dataMap) {
         features.push_back(iter.first);

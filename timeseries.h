@@ -12,10 +12,10 @@
 using std::vector;
 using std::string;
 
-class timeseries {
+class TimeSeries {
     std::map<string, vector<float>> _dataMap;
 public:
-    explicit timeseries(const char* CSVFile){
+    explicit TimeSeries(const char* CSVFile){
         chargeCSVToMap(CSVFile);
     }
     void setMapKeys(const string& keys);

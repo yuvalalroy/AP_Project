@@ -2,7 +2,7 @@
 #include "SimpleAnomalyDetector.h"
 
 // the previous parse
-void SimpleAnomalyDetector::learnNormal(const timeseries &ts) {
+void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     vector<string> mapFeatures = ts.getFeatures();
     unsigned int sizeOfFeatures = mapFeatures.size();
     float threshold = 0.9;
@@ -13,21 +13,21 @@ void SimpleAnomalyDetector::learnNormal(const timeseries &ts) {
         vector<float> feature = ts.getVecByFeature(mapFeatures.at(i));
         for (int j = i + 1; j < sizeOfFeatures; j++) {
             vector<float> comparedFeature = ts.getVecByFeature(mapFeatures.at(j));
-            float p = std::abs(pearson(&feature[0], &comparedFeature[0], (int) mapFeatures.at(j).size()));
+            float p = std::abs(pearson(&feature[0], &comparedFeature[0], (int) mapFeatures.size()));
             if ((p > maxPearson) && (p > threshold)) {
                 maxPearson = p;
                 mostCorrelated = j;
-            }
-            if (mostCorrelated != -1) {
-                // associate mapFeatures.at(i) and mapFeatures.at(j) as correlated features
-                setCorrelatedFeatures(mapFeatures.at(i), feature, mapFeatures.at(j), comparedFeature, p);
+                if (mostCorrelated != -1) {
+                    // associate mapFeatures.at(i) and mapFeatures.at(j) as correlated features
+                    setCorrelatedFeatures(mapFeatures.at(i), feature, mapFeatures.at(j), comparedFeature, p);
+                }
             }
         }
     }
 }
 
 // the detect parse
-vector<AnomalyReport> SimpleAnomalyDetector::detect(const timeseries &ts) {
+vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     vector<AnomalyReport> reports;
     for (const correlatedFeatures &pair: *_matchedFeatures) {
         vector<float> feature1 = ts.getVecByFeature(pair.feature1);
@@ -52,8 +52,7 @@ vector<correlatedFeatures> SimpleAnomalyDetector::getNormalModel() {
 Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float> vec2) {
     auto **points = new Point *[vec1.size()];
     for (int i = 0; i < vec1.size(); i++) {
-        points[i]->x = vec1[i];
-        points[i]->y = vec2[i];
+        points[i] = new Point(vec1[i],vec2[i]);
     }
     return points;
 }
@@ -74,7 +73,7 @@ void SimpleAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector
     float x = 1.1;
     correlatedFeatures matched;
     Point **featuresToPoints = fromVecToPoints(feature1, feature2);
-    matched.correlation = correlation;
+    matched.corrlation = correlation;
     matched.feature1 = f1;
     matched.feature2 = f2;
     matched.lin_reg = linear_reg(featuresToPoints, (int) feature1.size());

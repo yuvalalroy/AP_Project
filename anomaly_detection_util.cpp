@@ -37,7 +37,7 @@ float cov(float *x, float *y, int size) {
     return (exValXY - (exValX * exValY));
 }
 
-// returns the Pearson correlation coefficient of X and Y
+// returns the Pearson corrlation coefficient of X and Y
 float pearson(float *x, float *y, int size) {
     float sigmaX = sqrtf(var(x, size));
     float sigmaY = sqrtf(var(y, size));

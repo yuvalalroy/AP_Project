@@ -12,21 +12,22 @@
 #include <list>
 #include <array>
 #include <sstream>
+#include "math.h"
 
 using std::vector;
 using std::string;
 
 class AnomalyReport {
 public:
-    const string _description;
-    const long _timeStep;
-    AnomalyReport(string description, long timeStep) : _description(std::move(description)), _timeStep(timeStep){}
+    const string description;
+    const long timeStep;
+    AnomalyReport(string description, long timeStep) : description(std::move(description)), timeStep(timeStep){}
 };
 
 class TimeSeriesAnomalyDetector {
 public:
-    virtual void learnNormal(const timeseries& ts)=0;
-    virtual vector<AnomalyReport> detect(const timeseries& ts)=0;
+    virtual void learnNormal(const TimeSeries& ts)=0;
+    virtual vector<AnomalyReport> detect(const TimeSeries& ts)=0;
     virtual ~TimeSeriesAnomalyDetector()= default;
 };
 
