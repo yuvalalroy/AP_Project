@@ -1,6 +1,5 @@
-//
-// Created by amit on 04/11/2021.
-//
+// Amit Paz ID:319003455
+// Yuval Alroy ID:315789461
 
 #ifndef AP_PROJECT_SIMPLEANOMALYDETECTOR_H
 #define AP_PROJECT_SIMPLEANOMALYDETECTOR_H
@@ -22,12 +21,26 @@ struct correlatedFeatures{
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
     vector<correlatedFeatures> *_matchedFeatures;
 public:
+
+    // constructor
     SimpleAnomalyDetector();
+
+    // destructor
     virtual ~SimpleAnomalyDetector();
+
+    // learn the normal model by the time-series map as an input
     virtual void learnNormal(const TimeSeries& ts);
+
+    // detect the correlations and the reports
     virtual vector<AnomalyReport> detect(const TimeSeries& ts);
+
+    // getter for the normal model
     vector<correlatedFeatures> getNormalModel();
+
+    // get a points array from two vectors
     static Point **fromVecToPoints(vector<float> vec1, vector<float> vec2);
+
+    // set the _matchedFeatures field that will contain the correlated features
     void setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,
                                const vector<float> &feature2, float correlation);
 };

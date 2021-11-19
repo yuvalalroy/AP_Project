@@ -1,7 +1,11 @@
+// Amit Paz ID:319003455
+// Yuval Alroy ID:315789461
+
 #include "timeseries.h"
 #include "SimpleAnomalyDetector.h"
 
-// the previous parse
+
+// learn the normal model by the time-series map as an input
 void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     vector<string> mapFeatures = ts.getFeatures();
     unsigned int sizeOfFeatures = mapFeatures.size();
@@ -18,6 +22,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
                 maxPearson = p;
                 mostCorrelated = j;
                 if (mostCorrelated != -1) {
+
                     // associate mapFeatures.at(i) and mapFeatures.at(j) as correlated features
                     setCorrelatedFeatures(mapFeatures.at(i), feature, mapFeatures.at(j), comparedFeature, p);
                 }
@@ -26,7 +31,8 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     }
 }
 
-// the detect parse
+
+// detect the correlations and the reports
 vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     vector<AnomalyReport> reports;
     for (const correlatedFeatures &pair: *_matchedFeatures) {
@@ -44,11 +50,14 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     return reports;
 }
 
+
+// getter for the normal model
 vector<correlatedFeatures> SimpleAnomalyDetector::getNormalModel() {
     return *_matchedFeatures;
 }
 
 
+// get a points array from two vectors
 Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float> vec2) {
     auto **points = new Point *[vec1.size()];
     for (int i = 0; i < vec1.size(); i++) {
@@ -57,6 +66,8 @@ Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float>
     return points;
 }
 
+
+// get the max deviation between points array and the line equation of the points
 float getMaxDev(Point **points, Line linReg, int size) {
     float maxDev = 0;
     for (int i = 0; i < size; i++) {
@@ -68,6 +79,8 @@ float getMaxDev(Point **points, Line linReg, int size) {
     return maxDev;
 }
 
+
+// set the _matchedFeatures field that will contain the correlated features
 void SimpleAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,
                                                   const vector<float> &feature2, float correlation) {
     float x = 1.1;
@@ -81,10 +94,14 @@ void SimpleAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector
     _matchedFeatures->push_back(matched);
 }
 
+
+// constructor
 SimpleAnomalyDetector::SimpleAnomalyDetector(){
     _matchedFeatures = new vector<correlatedFeatures>();
 }
 
+
+// destructor
 SimpleAnomalyDetector::~SimpleAnomalyDetector() {
     delete(_matchedFeatures);
 }

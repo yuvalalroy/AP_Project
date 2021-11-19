@@ -1,6 +1,5 @@
-//
-// Created by yuvalalroy on 11/1/21.
-//
+// Amit Paz ID:319003455
+// Yuval Alroy ID:315789461
 
 #ifndef UNTITLED_ANOMALY_DETECTION_UTIL_H
 #define UNTITLED_ANOMALY_DETECTION_UTIL_H
