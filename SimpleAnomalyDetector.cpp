@@ -54,6 +54,7 @@ Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float>
     for (int i = 0; i < vec1.size(); i++) {
         points[i] = new Point(vec1[i],vec2[i]);
     }
+
     return points;
 }
 
@@ -79,6 +80,7 @@ void SimpleAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector
     matched.lin_reg = linear_reg(featuresToPoints, (int) feature1.size());
     matched.threshold = x * getMaxDev(featuresToPoints, matched.lin_reg, (int) feature1.size());
     _matchedFeatures->push_back(matched);
+
 }
 
 SimpleAnomalyDetector::SimpleAnomalyDetector(){

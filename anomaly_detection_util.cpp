@@ -72,3 +72,4 @@ float dev(Point p, Line l) {
     float diff = fx - p.y;
     return diff >= 0 ? diff : -diff;
 }
+
