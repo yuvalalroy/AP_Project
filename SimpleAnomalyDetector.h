@@ -11,14 +11,17 @@
 #include <string.h>
 #include <math.h>
 
-struct correlatedFeatures{
+struct correlatedFeatures {
     string feature1,feature2; // names of the correlated features
-    float corrlation;
     Line lin_reg;
+    Point center;
+    float corrlation;
     float threshold;
+    float radius;
 };
 
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
+protected:
     vector<correlatedFeatures> *_matchedFeatures;
 public:
 
@@ -40,9 +43,10 @@ public:
     // get a points array from two vectors
     static Point **fromVecToPoints(vector<float> vec1, vector<float> vec2);
 
-    // set the _matchedFeatures field that will contain the correlated features
-    void setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,
+    virtual void setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,
                                const vector<float> &feature2, float correlation);
+
+    void setMatchedFeatures(const vector<correlatedFeatures>& matched);
 };
 
 #endif //AP_PROJECT_SIMPLEANOMALYDETECTOR_H

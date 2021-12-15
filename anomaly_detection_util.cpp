@@ -11,7 +11,7 @@ float getExpectedValue(float *arr, int size) {
     for (int i = 0; i < size; i++) {
         sum += arr[i];
     }
-    return (1 / (float) size) * sum;
+    return (1 / ((float) size)) * sum;
 }
 
 
@@ -20,7 +20,7 @@ float var(float *x, int size) {
     float exVal = getExpectedValue(x, size);
     float doubleSum = 0;
     for (int i = 0; i < size; i++) {
-        doubleSum += powf(x[i], 2);
+        doubleSum += x[i] * x[i];
     }
 
     return (doubleSum / (float) size) - (exVal * exVal);
@@ -36,16 +36,14 @@ float cov(float *x, float *y, int size) {
         xy[i] = x[i] * y[i];
     }
     float exValXY = getExpectedValue(xy, size);
+
     return (exValXY - (exValX * exValY));
 }
 
 
 // returns the Pearson correlation coefficient of X and Y
 float pearson(float *x, float *y, int size) {
-    float sigmaX = sqrtf(var(x, size));
-    float sigmaY = sqrtf(var(y, size));
-
-    return cov(x, y, size) / (sigmaX * sigmaY);
+    return cov(x,y,size) / (sqrtf(var(x,size)) * sqrtf(var(y,size)));
 }
 
 
