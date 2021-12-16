@@ -23,6 +23,7 @@ struct correlatedFeatures {
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 protected:
     vector<correlatedFeatures> *_matchedFeatures;
+    float _threshold;
 public:
 
     // constructor
@@ -47,6 +48,8 @@ public:
                                const vector<float> &feature2, float correlation);
 
     void setMatchedFeatures(const vector<correlatedFeatures>& matched);
+
+    static void setThreshold(float threshold);
 };
 
 #endif //AP_PROJECT_SIMPLEANOMALYDETECTOR_H

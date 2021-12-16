@@ -34,7 +34,7 @@ vector<AnomalyReport> HybridAnomalyDetector::detect(const TimeSeries &ts) {
 void HybridAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector<float> &feature1,
                                                           const string &f2, const vector<float> &feature2, float correlation) {
     SimpleAnomalyDetector::setCorrelatedFeatures(f1, feature1, f2, feature2, correlation);
-    if ((correlation > 0.5) && (correlation < 0.9)){
+    if ((correlation > 0.5) && (correlation < _threshold)){
         float x = 1.1;
         struct correlatedFeatures matched;
         Point **featuresToPoints = fromVecToPoints(feature1, feature2);

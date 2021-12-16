@@ -60,6 +60,10 @@ Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float>
     return points;
 }
 
+void SimpleAnomalyDetector::setThreshold(float threshold){
+    _threshold = threshold;
+}
+
 
 // get the max deviation between points array and the line equation of the points
 float getMaxDev(Point **points, Line linReg, int size) {
@@ -75,7 +79,7 @@ float getMaxDev(Point **points, Line linReg, int size) {
 
 void SimpleAnomalyDetector::setCorrelatedFeatures(const string &f1, const vector<float> &feature1, const string &f2,
                                                   const vector<float> &feature2, float correlation) {
-    if (correlation >= 0.9) {
+    if (correlation >= _threshold) {
         float x = 1.1;
         struct correlatedFeatures matched;
         Point **featuresToPoints = fromVecToPoints(feature1, feature2);
@@ -103,6 +107,7 @@ void SimpleAnomalyDetector::setMatchedFeatures(const vector<correlatedFeatures> 
 // constructor
 SimpleAnomalyDetector::SimpleAnomalyDetector() {
     _matchedFeatures = new vector<correlatedFeatures>();
+    _threshold = 0.9;
 }
 
 
