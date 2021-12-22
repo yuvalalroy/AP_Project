@@ -5,6 +5,7 @@
 #include "SimpleAnomalyDetector.h"
 #include "HybridAnomalyDetector.h"
 
+float SimpleAnomalyDetector::_threshold;
 
 // learn the normal model by the time-series map as an input
 void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
@@ -30,7 +31,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     }
 }
 
-// detect the correlations and the reports
+// detect the correlations and the _reports
 vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     vector<AnomalyReport> reports;
     for (const correlatedFeatures &pair: *_matchedFeatures) {
@@ -60,7 +61,7 @@ Point **SimpleAnomalyDetector::fromVecToPoints(vector<float> vec1, vector<float>
     return points;
 }
 
-void SimpleAnomalyDetector::setThreshold(float threshold){
+void SimpleAnomalyDetector::setThreshold(const float &threshold){
     _threshold = threshold;
 }
 

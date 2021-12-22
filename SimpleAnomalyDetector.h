@@ -23,7 +23,7 @@ struct correlatedFeatures {
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 protected:
     vector<correlatedFeatures> *_matchedFeatures;
-    float _threshold;
+    static float _threshold;
 public:
 
     // constructor
@@ -35,7 +35,7 @@ public:
     // learn the normal model by the time-series map as an input
     virtual void learnNormal(const TimeSeries& ts);
 
-    // detect the correlations and the reports
+    // detect the correlations and the _reports
     virtual vector<AnomalyReport> detect(const TimeSeries& ts);
 
     // getter for the normal model
@@ -49,7 +49,7 @@ public:
 
     void setMatchedFeatures(const vector<correlatedFeatures>& matched);
 
-    static void setThreshold(float threshold);
+    static void setThreshold(const float &threshold);
 };
 
 #endif //AP_PROJECT_SIMPLEANOMALYDETECTOR_H
