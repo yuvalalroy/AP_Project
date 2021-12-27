@@ -5,6 +5,8 @@
 
 #include <string.h>
 #include "commands.h"
+#include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -13,7 +15,7 @@ class CLI {
     vector<Command*> commands;
 	// you can add data members
 public:
-	explicit CLI(DefaultIO* dio);
+	CLI(DefaultIO* dio);
 	void start();
 	virtual ~CLI();
 

@@ -5,8 +5,8 @@
 
 #include<iostream>
 #include <string.h>
-
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <iomanip>
 #include "HybridAnomalyDetector.h"
@@ -22,33 +22,33 @@ public:
 	virtual ~DefaultIO(){}
 };
 
-class standardIO:public DefaultIO {
-    string read() override {
-        string input;
-        cin >> input;
-        return input;
-    }
-
-    void write(string text) override {
-        cout << text;
-    }
-
-    void write(float f) override {
-        cout << f;
-    }
-
-    void read(float* f) override {
-        cin >> *f;
-    }
-};
-
-class socketIO:public DefaultIO {
-    virtual string read();
-    virtual void write(string text);
-    virtual void write(float f);
-    virtual void read(float* f);
-};
-
+//class standardIO:public DefaultIO {
+//    string read() override {
+//        string input;
+//        cin >> input;
+//        return input;
+//    }
+//
+//    void write(string text) override {
+//        cout << text;
+//    }
+//
+//    void write(float f) override {
+//        cout << f;
+//    }
+//
+//    void read(float* f) override {
+//        cin >> *f;
+//    }
+//};
+//
+//class socketIO:public DefaultIO {
+//    virtual string read();
+//    virtual void write(string text);
+//    virtual void write(float f);
+//    virtual void read(float* f);
+//};
+//
 
 // you may edit this class
 class Command {
@@ -109,12 +109,12 @@ public:
     explicit changeThresholdCommand(DefaultIO* dio):Command(dio){}
 
     void execute() override{
-        float *newThreshold;
+        float newThreshold;
         while (true) {
             dio->write("The current correlation threshold is 0.9\n");
-            dio->read(newThreshold);
-            if ((*newThreshold > 0) && (*newThreshold < 1)) {
-                setThreshold(*newThreshold);
+            dio->read(&newThreshold);
+            if ((newThreshold > 0) && (newThreshold < 1)) {
+                setThreshold(newThreshold);
                 break;
             }
             dio->write("please choose a value between 0 and 1.\n");
@@ -147,8 +147,8 @@ public:
 
     void execute() override {
         HybridAnomalyDetector ad;
-        TimeSeries trainCSV("anomalyTrain.csv");
-        TimeSeries testCSV("anomalyTest.csv");
+        TimeSeries trainCSV("/home/amit/CLionProjects/AP_Project/anomalyTrain.csv");
+        TimeSeries testCSV("/home/amit/CLionProjects/AP_Project/anomalyTest.csv");
         HybridAnomalyDetector::setThreshold(_threshold);
         ad.learnNormal(trainCSV);
         _reports = ad.detect(testCSV);
