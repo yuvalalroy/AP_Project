@@ -48,7 +48,8 @@ void TimeSeries::chargeCSVToMap(const char *CSVFile) {
 
     // read the rest of the file - values
     while (getline(file, line)) {
-        setMapValues(line);
+        if (line != "done")
+            setMapValues(line);
     }
 }
 

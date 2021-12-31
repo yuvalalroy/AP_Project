@@ -35,7 +35,7 @@ public:
     // learn the normal model by the time-series map as an input
     virtual void learnNormal(const TimeSeries& ts);
 
-    // detect the correlations and the _reports
+    // detect the correlations and the to_report
     virtual vector<AnomalyReport> detect(const TimeSeries& ts);
 
     // getter for the normal model

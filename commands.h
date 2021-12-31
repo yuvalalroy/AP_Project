@@ -11,6 +11,7 @@
 #include <iomanip>
 #include "HybridAnomalyDetector.h"
 
+
 using namespace std;
 
 class DefaultIO{
@@ -54,13 +55,14 @@ public:
 class Command {
 protected:
     DefaultIO *dio;
-    float _threshold;
-    vector<AnomalyReport> _reports;
-    vector<pair<pair<long, long>, string>> _bindReports;
+    float* defaultThreshold = new float(0.9);
+    vector<AnomalyReport>* to_report;
+    vector<pair<pair<long, long>, string>>* bindReports;
 
 public:
     Command(DefaultIO *dio) : dio(dio) {
-        _threshold = 0.9;
+        to_report = new vector<AnomalyReport>();
+        bindReports = new vector<pair<pair<long, long>, string>>();
     }
     virtual void execute() = 0;
     virtual ~Command() {}
@@ -84,15 +86,20 @@ public:
         } while (line != "done");
 
         uploadFilesToServer(name, text);
-        dio->write("Upload complete.");
+        dio->write("Upload complete.\n");
     }
 
-    void setThreshold(const float& threshold){
-        _threshold = threshold;
+    void setThreshold(const float& newThreshold){
+        *defaultThreshold = newThreshold;
     }
+
+    vector<AnomalyReport> getReports(){
+        return *to_report;
+    }
+
 };
 
-class uploadCSVCommand:public Command{
+class uploadCSVCommand:virtual public Command{
 public:
     explicit uploadCSVCommand(DefaultIO* dio):Command(dio){}
 
@@ -104,7 +111,7 @@ public:
     virtual ~uploadCSVCommand(){}
 };
 
-class changeThresholdCommand:public Command{
+class changeThresholdCommand:virtual public Command{
 public:
     explicit changeThresholdCommand(DefaultIO* dio):Command(dio){}
 
@@ -112,6 +119,7 @@ public:
         float newThreshold;
         while (true) {
             dio->write("The current correlation threshold is 0.9\n");
+            dio->write("Type a new threshold\n");
             dio->read(&newThreshold);
             if ((newThreshold > 0) && (newThreshold < 1)) {
                 setThreshold(newThreshold);
@@ -124,45 +132,50 @@ public:
     virtual ~changeThresholdCommand(){}
 };
 
-class runHybridAlgoCommand:public Command{
+class runHybridAlgoCommand:virtual public Command{
 public:
     explicit runHybridAlgoCommand(DefaultIO* dio):Command(dio){}
 
-    void bindReports(){
+    void bind(){
         pair<pair<long, long>, string> tmp;
-        for_each(_reports.begin(),_reports.end(),[&tmp, this](AnomalyReport& report){
+        for(const AnomalyReport& report : *to_report){
+            to_report->push_back(report);
+        }
+
+        for_each(to_report->begin(), to_report->end(), [&tmp, this](AnomalyReport& report){
             if((report.timeStep == tmp.first.second + 1) && (report.description == tmp.second))
                 tmp.first.second ++;
             else{
-                _bindReports.push_back(tmp);
+                bindReports->push_back(tmp);
                 tmp.first.first= report.timeStep;
                 tmp.first.second = tmp.first.first;
                 tmp.second = report.description;
 
             }
         });
-        _bindReports.push_back(tmp);
-        //_bindReports.erase(_bindReports.begin());
+        bindReports->push_back(tmp);
+        bindReports->erase(bindReports->begin());
     }
 
     void execute() override {
         HybridAnomalyDetector ad;
-        TimeSeries trainCSV("/home/amit/CLionProjects/AP_Project/anomalyTrain.csv");
-        TimeSeries testCSV("/home/amit/CLionProjects/AP_Project/anomalyTest.csv");
-        HybridAnomalyDetector::setThreshold(_threshold);
+        TimeSeries trainCSV("anomalyTrain.csv");
+        TimeSeries testCSV("anomalyTest.csv");
+        HybridAnomalyDetector::setThreshold(*defaultThreshold);
         ad.learnNormal(trainCSV);
-        _reports = ad.detect(testCSV);
-        bindReports();
+        *to_report = ad.detect(testCSV);
+
+        bind();
         dio->write("anomaly detection complete.\n");
     }
 };
 
-class printReportsCommand:public Command {
+class printReportsCommand:virtual public Command {
 public:
     explicit printReportsCommand(DefaultIO* dio):Command(dio){}
 
     void execute() override {
-        for (const AnomalyReport& report: _reports){
+        for (const AnomalyReport& report: *to_report){
             dio->write((float)report.timeStep);
             dio->write("\t");
             dio->write(report.description + "\n");
@@ -171,12 +184,12 @@ public:
     }
 };
 
-class analyzeResultsCommand:public Command {
+class analyzeResultsCommand:virtual public Command {
 public:
     explicit analyzeResultsCommand(DefaultIO *dio) : Command(dio) {}
 
     bool truePositive(pair<long, long> p) {
-        for(const pair<pair<long,long>, string>& pair : _bindReports) {
+        for(const pair<pair<long,long>, string>& pair : *bindReports) {
            if ((p.first >= pair.first.first) && (p.second >= pair.first.second)){
                return true;
            }
@@ -200,11 +213,12 @@ public:
         dio->write("Please upload your local anomalies file.\n");
         vector<pair<long, long>> data;
         string line;
-        do {
-            line = dio->read();
+        line = dio->read();
+        while (line != "done") {
             data.push_back(split(line));
-        } while (line != "done");
-        dio->write("Upload complete.");
+            line = dio->read();
+        }
+        dio->write("Upload complete.\n");
         float TP, FP = 0;
         size_t P = data.size();
         long n = data.end()->second - data.begin()->first + 1;
@@ -222,12 +236,14 @@ public:
         float falseAlarmRate =  floorf((FP / (float)N) * 1000) / 1000 ;
         dio->write("True Positive Rate: ");
         dio->write(truePosRate);
+        dio->write("\n");
         dio->write("False Positive Rate: ");
         dio->write(falseAlarmRate);
+        dio->write("\n");
     }
 };
 
-class exitCommand:public Command {
+class exitCommand:virtual public Command {
 public:
     explicit exitCommand(DefaultIO* dio):Command(dio){}
     void execute() override {}

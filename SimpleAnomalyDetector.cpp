@@ -31,7 +31,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries &ts) {
     }
 }
 
-// detect the correlations and the _reports
+// detect the correlations and the to_report
 vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries &ts) {
     vector<AnomalyReport> reports;
     for (const correlatedFeatures &pair: *_matchedFeatures) {
