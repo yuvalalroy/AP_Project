@@ -23,48 +23,22 @@ public:
 	virtual ~DefaultIO(){}
 };
 
-//class standardIO:public DefaultIO {
-//    string read() override {
-//        string input;
-//        cin >> input;
-//        return input;
-//    }
-//
-//    void write(string text) override {
-//        cout << text;
-//    }
-//
-//    void write(float f) override {
-//        cout << f;
-//    }
-//
-//    void read(float* f) override {
-//        cin >> *f;
-//    }
-//};
-//
-//class socketIO:public DefaultIO {
-//    virtual string read();
-//    virtual void write(string text);
-//    virtual void write(float f);
-//    virtual void read(float* f);
-//};
-//
+struct Info {
+    float defaultThreshold;
+    vector<AnomalyReport> to_report;
+    vector<pair<pair<long, long>, pair<string, bool>>> bindReports;
+    long n;
+};
 
 // you may edit this class
 class Command {
 protected:
     DefaultIO *dio;
-    float* defaultThreshold = new float(0.9);
-    vector<AnomalyReport>* to_report;
-    vector<pair<pair<long, long>, string>>* bindReports;
+
 
 public:
-    Command(DefaultIO *dio) : dio(dio) {
-        to_report = new vector<AnomalyReport>();
-        bindReports = new vector<pair<pair<long, long>, string>>();
-    }
-    virtual void execute() = 0;
+    Command(DefaultIO *dio) : dio(dio) {}
+    virtual void execute(Info* info) = 0;
     virtual ~Command() {}
 
     void uploadFilesToServer(const string &fileName, const vector<string> &text) {
@@ -76,25 +50,19 @@ public:
         file.close();
     }
 
-    void uploadFile(DefaultIO* dio, const string& name, const string& request) {
+    void uploadFile(DefaultIO* dio, const string& name, const string& request, Info* info) {
         dio->write(request);
         vector<string> text;
-        string line;
-        do {
-            line = dio->read();
+        string line = dio->read();
+        while (line != "done\n") {
             text.push_back(line);
-        } while (line != "done");
-
+            line = dio->read();
+            if (name == "anomalyTest.csv")
+                info->n = info->n+1;
+        }
+        info->n = info->n-1;
         uploadFilesToServer(name, text);
         dio->write("Upload complete.\n");
-    }
-
-    void setThreshold(const float& newThreshold){
-        *defaultThreshold = newThreshold;
-    }
-
-    vector<AnomalyReport> getReports(){
-        return *to_report;
     }
 
 };
@@ -103,9 +71,9 @@ class uploadCSVCommand:virtual public Command{
 public:
     explicit uploadCSVCommand(DefaultIO* dio):Command(dio){}
 
-    void execute() override{
-        uploadFile(dio, "anomalyTrain.csv", "Please upload your local train CSV file.\n");
-        uploadFile(dio, "anomalyTest.csv", "Please upload your local test CSV file.\n");
+    void execute(Info* info) override{
+        uploadFile(dio, "anomalyTrain.csv", "Please upload your local train CSV file.\n", info);
+        uploadFile(dio, "anomalyTest.csv", "Please upload your local test CSV file.\n", info);
     }
 
     virtual ~uploadCSVCommand(){}
@@ -115,14 +83,16 @@ class changeThresholdCommand:virtual public Command{
 public:
     explicit changeThresholdCommand(DefaultIO* dio):Command(dio){}
 
-    void execute() override{
+    void execute(Info* info) override{
         float newThreshold;
+        dio->write("The current correlation threshold is ");
+        dio->write(info->defaultThreshold);
+        dio->write("\n");
+        dio->write("Type a new threshold\n");
         while (true) {
-            dio->write("The current correlation threshold is 0.9\n");
-            dio->write("Type a new threshold\n");
             dio->read(&newThreshold);
-            if ((newThreshold > 0) && (newThreshold < 1)) {
-                setThreshold(newThreshold);
+            if ((newThreshold >= 0) && (newThreshold <= 1)) {
+                info->defaultThreshold = newThreshold;
                 break;
             }
             dio->write("please choose a value between 0 and 1.\n");
@@ -136,37 +106,16 @@ class runHybridAlgoCommand:virtual public Command{
 public:
     explicit runHybridAlgoCommand(DefaultIO* dio):Command(dio){}
 
-    void bind(){
-        pair<pair<long, long>, string> tmp;
-        for(const AnomalyReport& report : *to_report){
-            to_report->push_back(report);
-        }
-
-        for_each(to_report->begin(), to_report->end(), [&tmp, this](AnomalyReport& report){
-            if((report.timeStep == tmp.first.second + 1) && (report.description == tmp.second))
-                tmp.first.second ++;
-            else{
-                bindReports->push_back(tmp);
-                tmp.first.first= report.timeStep;
-                tmp.first.second = tmp.first.first;
-                tmp.second = report.description;
-
-            }
-        });
-        bindReports->push_back(tmp);
-        bindReports->erase(bindReports->begin());
-    }
-
-    void execute() override {
+    void execute(Info* info) override {
         HybridAnomalyDetector ad;
         TimeSeries trainCSV("anomalyTrain.csv");
         TimeSeries testCSV("anomalyTest.csv");
-        HybridAnomalyDetector::setThreshold(*defaultThreshold);
+        HybridAnomalyDetector::setThreshold(info->defaultThreshold);
         ad.learnNormal(trainCSV);
-        *to_report = ad.detect(testCSV);
+        info->to_report = ad.detect(testCSV);
 
-        bind();
         dio->write("anomaly detection complete.\n");
+        //info->n = testCSV.getN();
     }
 };
 
@@ -174,11 +123,10 @@ class printReportsCommand:virtual public Command {
 public:
     explicit printReportsCommand(DefaultIO* dio):Command(dio){}
 
-    void execute() override {
-        for (const AnomalyReport& report: *to_report){
+    void execute(Info* info) override {
+        for (const AnomalyReport& report: info->to_report){
             dio->write((float)report.timeStep);
-            dio->write("\t");
-            dio->write(report.description + "\n");
+            dio->write("\t" + report.description + "\n");
         }
         dio->write("Done.\n");
     }
@@ -188,11 +136,29 @@ class analyzeResultsCommand:virtual public Command {
 public:
     explicit analyzeResultsCommand(DefaultIO *dio) : Command(dio) {}
 
-    bool truePositive(pair<long, long> p) {
-        for(const pair<pair<long,long>, string>& pair : *bindReports) {
-           if ((p.first >= pair.first.first) && (p.second >= pair.first.second)){
-               return true;
-           }
+    void bind(Info* info){
+        pair<pair<long, long>, pair<string,bool>> tmp;
+
+        for_each(info->to_report.begin(), info->to_report.end(), [&tmp, info](AnomalyReport& report){
+            if((report.timeStep == tmp.first.second + 1) && (report.description == tmp.second.first))
+                tmp.first.second ++;
+            else{
+                info->bindReports.push_back(tmp);
+                tmp.first.first= report.timeStep;
+                tmp.first.second = tmp.first.first;
+                tmp.second.first = report.description;
+            }
+        });
+        info->bindReports.push_back(tmp);
+        info->bindReports.erase(info->bindReports.begin());
+    }
+
+    bool truePositive(pair<long, long> p, Info* info) {
+        for(pair<pair<long,long>, pair<string, bool>> &pair : info->bindReports) {
+            if ((p.second >= pair.first.first) && (p.first <= pair.first.second)) {
+                pair.second.second = true;
+                return true;
+            }
         }
         return false;
     }
@@ -209,44 +175,59 @@ public:
         return pair;
     }
 
-    void execute() override {
+    void execute(Info* info) override {
+        bind(info);
+        for(pair<pair<long,long>, pair<string, bool>> &pair : info->bindReports){
+            pair.second.second = false;
+        }
         dio->write("Please upload your local anomalies file.\n");
         vector<pair<long, long>> data;
+        stringstream TPstream, FPstream;
         string line;
         line = dio->read();
-        while (line != "done") {
+        while (line != "done\n") {
             data.push_back(split(line));
             line = dio->read();
         }
         dio->write("Upload complete.\n");
-        float TP, FP = 0;
+        float TP=0, FP = 0;
         size_t P = data.size();
-        long n = data.end()->second - data.begin()->first + 1;
+
         long sum = 0;
         for (pair<long, long> pair: data) {
-            if(truePositive(pair))
+            if(truePositive(pair, info))
                 TP++;
-            else
-                FP++;
             sum += pair.second - pair.first + 1;
         }
+        for (pair<pair<long,long>, pair<string, bool>> &pair : info->bindReports) {
+            if (!pair.second.second)
+                FP++;
+        }
 
-        long N = n - sum;
-        float truePosRate =  floorf((TP / (float)P) * 1000) / 1000 ;
-        float falseAlarmRate =  floorf((FP / (float)N) * 1000) / 1000 ;
+        long N = info->n - sum;
+//        float truePosRate = ((int)(1000.0*TP/P))/1000.0f;
+//        float falseAlarmRate = ((int)(1000.0*FP/N))/1000.0f;
+
+        float truePosRate = (float) floor(TP * 1000 / P) / 1000;
+        float falseAlarmRate = (float) floor(FP * 1000 / N) / 1000;
+        TPstream << truePosRate;
+        FPstream << falseAlarmRate;
+
         dio->write("True Positive Rate: ");
-        dio->write(truePosRate);
+        dio->write(TPstream.str());
         dio->write("\n");
         dio->write("False Positive Rate: ");
-        dio->write(falseAlarmRate);
+        dio->write(FPstream.str());
         dio->write("\n");
+
+        info->bindReports.clear();
     }
 };
 
 class exitCommand:virtual public Command {
 public:
     explicit exitCommand(DefaultIO* dio):Command(dio){}
-    void execute() override {}
+    void execute(Info* info) override {}
 };
 
 

@@ -13,10 +13,12 @@ using std::string;
 
 class TimeSeries {
     std::map<string, vector<float>> _dataMap;
+    long _n;
 public:
 
     // constructor
     explicit TimeSeries(const char* CSVFile){
+        _n = 0;
         chargeCSVToMap(CSVFile);
     }
 
@@ -34,6 +36,8 @@ public:
 
     // getter for the vectors by feature (get value by key)
     vector<float> getVecByFeature(const string &feature) const;
+
+    long getN() const{ return _n; }
 };
 
 #endif //AP_PROJECT_TIMESERIES_H

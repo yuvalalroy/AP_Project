@@ -24,9 +24,9 @@ vector<AnomalyReport> HybridAnomalyDetector::detect(const TimeSeries &ts) {
         }
     }
 
-    for ( const AnomalyReport& report : minCorReports){ reports.push_back(report); }
-
     for ( const AnomalyReport& report : maxCorReports){ reports.push_back(report); }
+
+    for ( const AnomalyReport& report : minCorReports){ reports.push_back(report); }
 
     return reports;
 }
